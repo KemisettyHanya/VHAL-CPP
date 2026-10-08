@@ -1,0 +1,201 @@
+VERSION ""
+
+NS_ :
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: ChassisECU PowertrainECU BmsECU InverterECU BodyECU AdasECU GatewayECU AndroidVHAL
+
+BO_ 256 WheelSpeedMsg: 8 ChassisECU
+ SG_ WheelSpeedFL : 0|16@1+ (0.01,0) [0|350] "km/h" AndroidVHAL
+ SG_ WheelSpeedFR : 16|16@1+ (0.01,0) [0|350] "km/h" AndroidVHAL
+ SG_ WheelSpeedRL : 32|16@1+ (0.01,0) [0|350] "km/h" AndroidVHAL
+ SG_ WheelSpeedRR : 48|16@1+ (0.01,0) [0|350] "km/h" AndroidVHAL
+
+BO_ 288 VehicleDynamicsMsg: 8 ChassisECU
+ SG_ VehicleSpeed : 0|16@1+ (0.01,0) [0|350] "km/h" AndroidVHAL
+ SG_ SteeringWheelAngle : 16|16@1- (0.1,0) [-720|720] "deg" AndroidVHAL
+ SG_ YawRate : 32|16@1- (0.01,0) [-100|100] "deg/s" AndroidVHAL
+ SG_ LateralAcceleration : 48|16@1- (0.01,0) [-25|25] "m/s^2" AndroidVHAL
+
+BO_ 320 BrakeSystemStatus: 8 ChassisECU
+ SG_ BrakePedalPosition : 0|8@1+ (0.5,0) [0|100] "%" AndroidVHAL
+ SG_ BrakeMasterPressure : 8|16@1+ (0.05,0) [0|250] "bar" AndroidVHAL
+ SG_ ABSActive : 24|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ ESCActive : 25|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ TractionControlActive : 26|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ BrakeWarningLamp : 27|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ ParkingBrakeState : 28|2@1+ (1,0) [0|3] "enum" AndroidVHAL
+
+BO_ 352 ThrottlePedalStatus: 8 PowertrainECU
+ SG_ AcceleratorPedalPosition : 0|8@1+ (0.5,0) [0|100] "%" AndroidVHAL
+ SG_ ThrottleValvePosition : 8|8@1+ (0.5,0) [0|100] "%" AndroidVHAL
+ SG_ KickdownActive : 16|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ DriverRequestedTorque : 24|16@1- (0.1,0) [-1000|2000] "Nm" AndroidVHAL
+
+BO_ 512 EngineStatus: 8 PowertrainECU
+ SG_ EngineRPM : 0|16@1+ (0.25,0) [0|9000] "rpm" AndroidVHAL
+ SG_ EngineCoolantTemp : 16|8@1+ (1,-40) [-40|215] "celsius" AndroidVHAL
+ SG_ EngineOilTemp : 24|8@1+ (1,-40) [-40|215] "celsius" AndroidVHAL
+ SG_ EngineOilPressure : 32|8@1+ (2,0) [0|500] "kPa" AndroidVHAL
+ SG_ FuelLevel : 40|8@1+ (0.5,0) [0|100] "%" AndroidVHAL
+ SG_ FuelFlowRate : 48|16@1+ (0.01,0) [0|100] "L/h" AndroidVHAL
+ SG_ CheckEngineLight : 64|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+
+BO_ 544 TransmissionData: 8 PowertrainECU
+ SG_ CurrentGear : 0|4@1+ (1,0) [0|10] "gear" AndroidVHAL
+ SG_ SelectedGear : 4|4@1+ (1,0) [0|5] "enum" AndroidVHAL
+ SG_ TransmissionFluidTemp : 8|8@1+ (1,-40) [-40|200] "celsius" AndroidVHAL
+ SG_ TorqueConverterLockup : 16|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ TransmissionMode : 20|4@1+ (1,0) [0|5] "enum" AndroidVHAL
+
+BO_ 592 ElectricDriveStatus: 8 InverterECU
+ SG_ MotorRPM : 0|16@1- (1,0) [-18000|18000] "rpm" AndroidVHAL
+ SG_ MotorTorque : 16|16@1- (0.1,0) [-600|600] "Nm" AndroidVHAL
+ SG_ MotorTemperature : 32|8@1+ (1,-40) [-40|200] "celsius" AndroidVHAL
+ SG_ InverterTemperature : 40|8@1+ (1,-40) [-40|200] "celsius" AndroidVHAL
+ SG_ RegenerativeBrakingState : 48|4@1+ (1,0) [0|4] "enum" AndroidVHAL
+
+BO_ 640 HighVoltageBattery: 8 BmsECU
+ SG_ BatteryStateOfCharge : 0|8@1+ (0.5,0) [0|100] "%" AndroidVHAL
+ SG_ BatteryVoltage : 8|16@1+ (0.02,0) [0|850] "V" AndroidVHAL
+ SG_ BatteryCurrent : 24|16@1- (0.1,0) [-800|800] "A" AndroidVHAL
+ SG_ BatteryTemperature : 40|8@1+ (1,-40) [-40|100] "celsius" AndroidVHAL
+ SG_ BatteryStateOfHealth : 48|8@1+ (0.5,0) [0|100] "%" AndroidVHAL
+ SG_ ChargingStatus : 56|4@1+ (1,0) [0|6] "enum" AndroidVHAL
+
+BO_ 768 FrontClimateControl: 8 BodyECU
+ SG_ CabinTempActual : 0|8@1+ (0.5,0) [0|50] "celsius" AndroidVHAL
+ SG_ CabinTempDriverTarget : 8|8@1+ (0.5,0) [15|35] "celsius" AndroidVHAL
+ SG_ CabinTempPassTarget : 16|8@1+ (0.5,0) [15|35] "celsius" AndroidVHAL
+ SG_ BlowerFanSpeedFront : 24|4@1+ (1,0) [0|7] "level" AndroidVHAL
+ SG_ ACCompressorState : 28|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ RecirculationMode : 29|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ DefrosterFront : 30|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ AutoClimateEnabled : 31|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+
+BO_ 784 RearClimateControl: 8 BodyECU
+ SG_ CabinTempRearActual : 0|8@1+ (0.5,0) [0|50] "celsius" AndroidVHAL
+ SG_ CabinTempRearTarget : 8|8@1+ (0.5,0) [15|35] "celsius" AndroidVHAL
+ SG_ BlowerFanSpeedRear : 16|4@1+ (1,0) [0|7] "level" AndroidVHAL
+ SG_ DefrosterRear : 20|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+
+BO_ 848 SeatControlsStatus: 8 BodyECU
+ SG_ HeatedSeatDriverLevel : 0|4@1+ (1,0) [0|3] "level" AndroidVHAL
+ SG_ HeatedSeatPassLevel : 4|4@1+ (1,0) [0|3] "level" AndroidVHAL
+ SG_ VentilatedSeatDriver : 8|4@1+ (1,0) [0|3] "level" AndroidVHAL
+ SG_ VentilatedSeatPass : 12|4@1+ (1,0) [0|3] "level" AndroidVHAL
+ SG_ SeatBeltDriverFastened : 16|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ SeatBeltPassFastened : 17|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+
+BO_ 896 BodyDoorStatus: 8 BodyECU
+ SG_ DoorOpenFrontLeft : 0|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ DoorOpenFrontRight : 1|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ DoorOpenRearLeft : 2|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ DoorOpenRearRight : 3|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ TrunkOpen : 4|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ HoodOpen : 5|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ CentralLockStatus : 6|2@1+ (1,0) [0|3] "enum" AndroidVHAL
+
+BO_ 928 BodyWindowSunroof: 8 BodyECU
+ SG_ WindowPositionFL : 0|8@1+ (0.5,0) [0|100] "%" AndroidVHAL
+ SG_ WindowPositionFR : 8|8@1+ (0.5,0) [0|100] "%" AndroidVHAL
+ SG_ WindowPositionRL : 16|8@1+ (0.5,0) [0|100] "%" AndroidVHAL
+ SG_ WindowPositionRR : 24|8@1+ (0.5,0) [0|100] "%" AndroidVHAL
+ SG_ SunroofPosition : 32|8@1+ (0.5,0) [0|100] "%" AndroidVHAL
+ SG_ RainSensorActive : 40|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+
+BO_ 1024 ExteriorLighting: 8 BodyECU
+ SG_ LowBeamStatus : 0|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ HighBeamStatus : 1|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ TurnSignalLeft : 2|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ TurnSignalRight : 3|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ HazardLightsActive : 4|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ DaytimeRunningLights : 5|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ FogLightsFront : 6|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ FogLightsRear : 7|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+
+BO_ 1104 TirePressureMonitoring: 8 ChassisECU
+ SG_ TirePressureFL : 0|8@1+ (2,0) [0|450] "kPa" AndroidVHAL
+ SG_ TirePressureFR : 8|8@1+ (2,0) [0|450] "kPa" AndroidVHAL
+ SG_ TirePressureRL : 16|8@1+ (2,0) [0|450] "kPa" AndroidVHAL
+ SG_ TirePressureRR : 24|8@1+ (2,0) [0|450] "kPa" AndroidVHAL
+ SG_ TireTempFL : 32|8@1+ (1,-40) [-40|120] "celsius" AndroidVHAL
+ SG_ TireTempFR : 40|8@1+ (1,-40) [-40|120] "celsius" AndroidVHAL
+ SG_ TirePressureWarning : 48|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+
+BO_ 1280 ADASDriveAssist: 8 AdasECU
+ SG_ AdaptiveCruiseControlState : 0|4@1+ (1,0) [0|5] "enum" AndroidVHAL
+ SG_ ACCSetSpeed : 8|8@1+ (1,0) [0|200] "km/h" AndroidVHAL
+ SG_ LaneDepartureWarning : 16|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ BlindSpotMonitorLeft : 17|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ BlindSpotMonitorRight : 18|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ ForwardCollisionWarning : 19|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ EmergencyBrakingTriggered : 20|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+
+CM_ BO_ 256 "High-speed wheel rotational sensor velocities";
+CM_ SG_ 256 WheelSpeedFL "Front Left wheel tangential ground speed in km/h";
+CM_ SG_ 256 WheelSpeedFR "Front Right wheel tangential ground speed in km/h";
+CM_ SG_ 256 WheelSpeedRL "Rear Left wheel tangential ground speed in km/h";
+CM_ SG_ 256 WheelSpeedRR "Rear Right wheel tangential ground speed in km/h";
+
+CM_ BO_ 288 "Chassis inertia and vehicle dynamic motion state";
+CM_ SG_ 288 VehicleSpeed "Averaged longitudinal ground velocity";
+CM_ SG_ 288 SteeringWheelAngle "Handwheel position in degrees";
+CM_ SG_ 288 YawRate "Chassis rotation about vertical axis";
+
+CM_ BO_ 320 "Hydraulic and electronic brake system sensors";
+CM_ SG_ 320 BrakePedalPosition "Driver brake pedal depression percentage";
+CM_ SG_ 320 BrakeMasterPressure "Hydraulic master cylinder pressure in bar";
+
+CM_ BO_ 512 "Internal combustion engine operating parameters";
+CM_ SG_ 512 EngineRPM "Crankshaft rotational speed in RPM";
+CM_ SG_ 512 EngineCoolantTemp "Engine block coolant fluid temperature";
+CM_ SG_ 512 FuelLevel "Fuel tank remaining liquid percentage";
+
+CM_ BO_ 640 "Electric vehicle high-voltage traction battery";
+CM_ SG_ 640 BatteryStateOfCharge "Battery usable capacity state of charge (SoC)";
+CM_ SG_ 640 BatteryVoltage "DC bus voltage of high-voltage pack";
+CM_ SG_ 640 BatteryCurrent "Traction pack current (+discharge, -charge)";
+
+CM_ BO_ 768 "Cabin front heating, ventilation, and air conditioning";
+CM_ SG_ 768 CabinTempActual "Front cabin air temperature sensor";
+CM_ SG_ 768 CabinTempDriverTarget "HVAC driver side requested target temperature";
+
+CM_ BO_ 896 "Vehicle door lock and ajar status switches";
+CM_ SG_ 896 DoorOpenFrontLeft "Front left driver door ajar switch";
+
+VAL_ 320 ParkingBrakeState 0 "Disengaged" 1 "Engaged" 2 "Applying" 3 "Fault" ;
+VAL_ 544 SelectedGear 0 "Park" 1 "Reverse" 2 "Neutral" 3 "Drive" 4 "Sport" 5 "Low" ;
+VAL_ 544 TransmissionMode 0 "Normal" 1 "Eco" 2 "Sport" 3 "Snow" 4 "Tow" ;
+VAL_ 640 ChargingStatus 0 "NotCharging" 1 "Connected" 2 "ChargingAC" 3 "ChargingDC" 4 "ChargingComplete" 5 "Fault" ;
+VAL_ 1280 AdaptiveCruiseControlState 0 "Off" 1 "Standby" 2 "Active" 3 "Override" 4 "Braking" 5 "Fault" ;
+

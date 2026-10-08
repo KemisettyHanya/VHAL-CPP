@@ -1,0 +1,77 @@
+VERSION ""
+
+NS_ :
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: BodyECU EngineECU TransmissionECU ChassisECU GatewayECU AndroidVHAL
+
+BO_ 420 VehDynamics: 8 ChassisECU
+ SG_ VehicleSpeed : 0|16@1+ (0.01,0) [0|300] "km/h" AndroidVHAL
+ SG_ SteeringAngle : 16|16@1- (0.1,0) [-720|720] "deg" AndroidVHAL
+ SG_ YawRate : 32|16@1- (0.01,0) [-100|100] "deg/s" AndroidVHAL
+ SG_ LateralAccel : 48|16@1- (0.01,0) [-20|20] "m/s^2" AndroidVHAL
+
+BO_ 688 EngineStatus: 8 EngineECU
+ SG_ EngineRPM : 0|16@1+ (0.25,0) [0|8500] "rpm" AndroidVHAL
+ SG_ EngineCoolantTemp : 16|8@1+ (1,-40) [-40|215] "celsius" AndroidVHAL
+ SG_ EngineOilTemp : 24|8@1+ (1,-40) [-40|215] "celsius" AndroidVHAL
+ SG_ FuelLevel : 32|8@1+ (0.5,0) [0|100] "%" AndroidVHAL
+
+BO_ 704 TransmissionStatus: 8 TransmissionECU
+ SG_ CurrentGear : 0|4@1+ (1,0) [0|10] "gear" AndroidVHAL
+ SG_ SelectedGear : 4|4@1+ (1,0) [0|5] "enum" AndroidVHAL
+ SG_ ParkingBrake : 8|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+
+BO_ 720 ClimateStatus: 8 BodyECU
+ SG_ CabinTempCurrent : 0|8@1+ (0.5,0) [0|50] "celsius" AndroidVHAL
+ SG_ CabinTempTarget : 8|8@1+ (0.5,0) [15|32] "celsius" AndroidVHAL
+ SG_ BlowerFanSpeed : 16|4@1+ (1,0) [0|7] "level" AndroidVHAL
+ SG_ AirConditioningOn : 20|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+ SG_ DefrosterOn : 21|1@1+ (1,0) [0|1] "bool" AndroidVHAL
+
+CM_ BO_ 420 "Active chassis and vehicle dynamic motion state";
+CM_ SG_ 420 VehicleSpeed "Wheel speed sensor ground velocity in km/h";
+CM_ SG_ 420 SteeringAngle "Handwheel angle in degrees from steering rack";
+CM_ SG_ 420 YawRate "Chassis z-axis rotation rate in degrees per second";
+CM_ BO_ 688 "Internal combustion engine and powertrain status";
+CM_ SG_ 688 EngineRPM "Crankshaft rotational speed";
+CM_ SG_ 688 EngineCoolantTemp "Engine head coolant temperature";
+CM_ BO_ 704 "Transmission control unit gear states";
+CM_ SG_ 704 CurrentGear "Physical gear engaged in gearbox";
+CM_ SG_ 704 SelectedGear "PRND shifter position";
+CM_ BO_ 720 "Cabin climate control sensors and actuation";
+
+VAL_ 704 SelectedGear 0 "Park" 1 "Reverse" 2 "Neutral" 3 "Drive" 4 "Sport" 5 "Low" ;
+VAL_ 704 ParkingBrake 0 "Disengaged" 1 "Engaged" ;
+VAL_ 720 AirConditioningOn 0 "Off" 1 "On" ;
+VAL_ 720 DefrosterOn 0 "Off" 1 "On" ;
+
