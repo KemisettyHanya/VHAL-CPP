@@ -32,7 +32,7 @@ public:
     bool createLinkBetweenPins(uint64_t fromPinId, uint64_t toPinId);
 
     // Fast Connection Tools
-    bool connectSelectedNodes();
+    bool connectSelectedNodes(std::string* outStatusMessage = nullptr);
     size_t autoConnectMatchingNames();
 
     void autoLayoutVertical();
@@ -61,6 +61,13 @@ private:
     std::vector<CanvasNode> mNodes;
     std::vector<NodeLink> mLinks;
     uint64_t mNextId = 1;
+
+    // Selection & View Tracking
+    uint64_t mLastSelectedCanNodeId = 0;
+    uint64_t mLastSelectedVhalNodeId = 0;
+    ImVec2 mCanvasScreenCenter = ImVec2(0.0f, 0.0f);
+    ImVec2 mCurrentViewCenter = ImVec2(350.0f, 250.0f);
+    uint32_t mSpawnCount = 0;
 
     // Pin to Node ID lookup
     std::unordered_map<uint64_t, uint64_t> mPinToNode;

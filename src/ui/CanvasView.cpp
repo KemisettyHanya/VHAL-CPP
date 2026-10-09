@@ -66,15 +66,36 @@ void CanvasView::clearCanvas() {
     mLinks.clear();
     mPinToNode.clear();
     mNextId = 1;
+    mLastSelectedCanNodeId = 0;
+    mLastSelectedVhalNodeId = 0;
+    mSpawnCount = 0;
     if (mOnLinksChanged) mOnLinksChanged();
 }
 
 uint64_t CanvasView::addCanSignalNode(const CanMessage& msg, const CanSignal& sig, float posX, float posY) {
+    float targetX = posX;
+    float targetY = posY;
+    if (targetX == 0.0f && targetY == 0.0f) {
+        float cascade = static_cast<float>((mSpawnCount++ % 5) * 25);
+        targetX = mCurrentViewCenter.x - 220.0f + cascade;
+        targetY = mCurrentViewCenter.y - 60.0f + cascade;
+    }
+
     // Check if node already exists for this signal
-    for (const auto& node : mNodes) {
+    for (auto& node : mNodes) {
         if (node.type == CanvasNodeType::CAN_SIGNAL &&
             node.canMsgId == msg.id &&
             node.signal.name == sig.name) {
+            // Reposition to current focused view so user immediately sees it
+            node.posX = targetX;
+            node.posY = targetY;
+            if (mEditorContext) {
+                ed::SetCurrentEditor(mEditorContext);
+                ed::SetNodePosition(ed::NodeId(node.id), ImVec2(targetX, targetY));
+                ed::ClearSelection();
+                ed::SelectNode(ed::NodeId(node.id), false);
+            }
+            mLastSelectedCanNodeId = node.id;
             return node.id;
         }
     }
@@ -86,8 +107,8 @@ uint64_t CanvasView::addCanSignalNode(const CanMessage& msg, const CanSignal& si
     node.canMsgName = msg.name;
     node.signal = sig;
     node.outputPinId = mNextId++;
-    node.posX = (posX != 0.0f) ? posX : 100.0f;
-    node.posY = (posY != 0.0f) ? posY : (100.0f + static_cast<float>(mNodes.size()) * 165.0f);
+    node.posX = targetX;
+    node.posY = targetY;
 
     mPinToNode[node.outputPinId] = node.id;
     mNodes.push_back(node);
@@ -95,15 +116,36 @@ uint64_t CanvasView::addCanSignalNode(const CanMessage& msg, const CanSignal& si
     if (mEditorContext) {
         ed::SetCurrentEditor(mEditorContext);
         ed::SetNodePosition(ed::NodeId(node.id), ImVec2(node.posX, node.posY));
+        ed::ClearSelection();
+        ed::SelectNode(ed::NodeId(node.id), false);
     }
+    mLastSelectedCanNodeId = node.id;
 
     return node.id;
 }
 
 uint64_t CanvasView::addVhalPropertyNode(const VhalProperty& prop, float posX, float posY) {
+    float targetX = posX;
+    float targetY = posY;
+    if (targetX == 0.0f && targetY == 0.0f) {
+        float cascade = static_cast<float>((mSpawnCount++ % 5) * 25);
+        targetX = mCurrentViewCenter.x + 50.0f + cascade;
+        targetY = mCurrentViewCenter.y - 60.0f + cascade;
+    }
+
     // Check if node already exists for this property
-    for (const auto& node : mNodes) {
+    for (auto& node : mNodes) {
         if (node.type == CanvasNodeType::VHAL_PROPERTY && node.property.id == prop.id) {
+            // Reposition to current focused view so user immediately sees it
+            node.posX = targetX;
+            node.posY = targetY;
+            if (mEditorContext) {
+                ed::SetCurrentEditor(mEditorContext);
+                ed::SetNodePosition(ed::NodeId(node.id), ImVec2(targetX, targetY));
+                ed::ClearSelection();
+                ed::SelectNode(ed::NodeId(node.id), false);
+            }
+            mLastSelectedVhalNodeId = node.id;
             return node.id;
         }
     }
@@ -113,8 +155,8 @@ uint64_t CanvasView::addVhalPropertyNode(const VhalProperty& prop, float posX, f
     node.type = CanvasNodeType::VHAL_PROPERTY;
     node.property = prop;
     node.inputPinId = mNextId++;
-    node.posX = (posX != 0.0f) ? posX : 650.0f;
-    node.posY = (posY != 0.0f) ? posY : (100.0f + static_cast<float>(mNodes.size()) * 165.0f);
+    node.posX = targetX;
+    node.posY = targetY;
 
     mPinToNode[node.inputPinId] = node.id;
     mNodes.push_back(node);
@@ -122,7 +164,10 @@ uint64_t CanvasView::addVhalPropertyNode(const VhalProperty& prop, float posX, f
     if (mEditorContext) {
         ed::SetCurrentEditor(mEditorContext);
         ed::SetNodePosition(ed::NodeId(node.id), ImVec2(node.posX, node.posY));
+        ed::ClearSelection();
+        ed::SelectNode(ed::NodeId(node.id), false);
     }
+    mLastSelectedVhalNodeId = node.id;
 
     return node.id;
 }
@@ -143,6 +188,9 @@ const CanvasNode* CanvasView::findNodeByPin(uint64_t pinId) const {
 }
 
 void CanvasView::removeNode(uint64_t nodeId) {
+    if (mLastSelectedCanNodeId == nodeId) mLastSelectedCanNodeId = 0;
+    if (mLastSelectedVhalNodeId == nodeId) mLastSelectedVhalNodeId = 0;
+
     auto it = std::remove_if(mNodes.begin(), mNodes.end(), [nodeId](const CanvasNode& n) {
         return n.id == nodeId;
     });
@@ -227,30 +275,116 @@ bool CanvasView::createLinkBetweenPins(uint64_t fromPinId, uint64_t toPinId) {
     return true;
 }
 
-bool CanvasView::connectSelectedNodes() {
-    if (!mEditorContext) return false;
+bool CanvasView::connectSelectedNodes(std::string* outStatusMessage) {
+    if (!mEditorContext) {
+        if (outStatusMessage) *outStatusMessage = "Editor not initialized.";
+        return false;
+    }
     ed::SetCurrentEditor(mEditorContext);
-
-    int count = ed::GetSelectedObjectCount();
-    if (count < 2) return false;
-
-    std::vector<ed::NodeId> selectedNodes(count);
-    int nodeCount = ed::GetSelectedNodes(selectedNodes.data(), count);
-    selectedNodes.resize(nodeCount);
 
     const CanvasNode* canNode = nullptr;
     const CanvasNode* vhalNode = nullptr;
 
-    for (auto nid : selectedNodes) {
-        const CanvasNode* n = findNode(nid.Get());
-        if (!n) continue;
-        if (n->type == CanvasNodeType::CAN_SIGNAL && !canNode) canNode = n;
-        else if (n->type == CanvasNodeType::VHAL_PROPERTY && !vhalNode) vhalNode = n;
+    // 1. Check directly selected nodes in the editor
+    int count = ed::GetSelectedObjectCount();
+    if (count > 0) {
+        std::vector<ed::NodeId> selectedNodes(count);
+        int nodeCount = ed::GetSelectedNodes(selectedNodes.data(), count);
+        selectedNodes.resize(nodeCount);
+
+        for (auto nid : selectedNodes) {
+            const CanvasNode* n = findNode(nid.Get());
+            if (!n) continue;
+            if (n->type == CanvasNodeType::CAN_SIGNAL && !canNode) {
+                canNode = n;
+                mLastSelectedCanNodeId = n->id;
+            } else if (n->type == CanvasNodeType::VHAL_PROPERTY && !vhalNode) {
+                vhalNode = n;
+                mLastSelectedVhalNodeId = n->id;
+            }
+        }
     }
 
-    if (canNode && vhalNode) {
-        return createLinkBetweenPins(canNode->outputPinId, vhalNode->inputPinId);
+    // 2. If only CAN node was selected, locate the target VHAL node
+    if (canNode && !vhalNode) {
+        if (mLastSelectedVhalNodeId != 0) {
+            vhalNode = findNode(mLastSelectedVhalNodeId);
+        }
+        if (!vhalNode) {
+            // Find any VHAL property node on the canvas
+            for (const auto& n : mNodes) {
+                if (n.type == CanvasNodeType::VHAL_PROPERTY) {
+                    vhalNode = &n;
+                    break;
+                }
+            }
+        }
     }
+
+    // 3. If only VHAL node was selected, locate the source CAN node
+    if (vhalNode && !canNode) {
+        if (mLastSelectedCanNodeId != 0) {
+            canNode = findNode(mLastSelectedCanNodeId);
+        }
+        if (!canNode) {
+            // Find any CAN signal node on the canvas
+            for (const auto& n : mNodes) {
+                if (n.type == CanvasNodeType::CAN_SIGNAL) {
+                    canNode = &n;
+                    break;
+                }
+            }
+        }
+    }
+
+    // 4. If neither node is directly selected right now, fall back to last selected pair or single nodes on canvas
+    if (!canNode && !vhalNode) {
+        if (mLastSelectedCanNodeId != 0) canNode = findNode(mLastSelectedCanNodeId);
+        if (mLastSelectedVhalNodeId != 0) vhalNode = findNode(mLastSelectedVhalNodeId);
+
+        if (!canNode) {
+            for (const auto& n : mNodes) {
+                if (n.type == CanvasNodeType::CAN_SIGNAL) { canNode = &n; break; }
+            }
+        }
+        if (!vhalNode) {
+            for (const auto& n : mNodes) {
+                if (n.type == CanvasNodeType::VHAL_PROPERTY) { vhalNode = &n; break; }
+            }
+        }
+    }
+
+    if (!canNode && !vhalNode) {
+        if (outStatusMessage) *outStatusMessage = "No nodes on canvas to connect.";
+        return false;
+    }
+    if (!canNode) {
+        if (outStatusMessage) *outStatusMessage = "Select or add a CAN signal node first.";
+        return false;
+    }
+    if (!vhalNode) {
+        if (outStatusMessage) *outStatusMessage = "Select or add an AOSP property node first.";
+        return false;
+    }
+
+    // Check if link already exists
+    for (const auto& l : mLinks) {
+        if (l.fromPinId == canNode->outputPinId && l.toPinId == vhalNode->inputPinId) {
+            if (outStatusMessage) {
+                *outStatusMessage = "Already connected: [" + canNode->signal.name + "] -> [" + vhalNode->property.name + "]";
+            }
+            return true;
+        }
+    }
+
+    if (createLinkBetweenPins(canNode->outputPinId, vhalNode->inputPinId)) {
+        if (outStatusMessage) {
+            *outStatusMessage = "Connected: CAN [" + canNode->signal.name + "] -> AOSP [" + vhalNode->property.name + "]!";
+        }
+        return true;
+    }
+
+    if (outStatusMessage) *outStatusMessage = "Could not create link between pins.";
     return false;
 }
 
@@ -433,6 +567,29 @@ void CanvasView::loadFromReverseResult(const ReverseEngineeringResult& result) {
 void CanvasView::render() {
     ed::SetCurrentEditor(mEditorContext);
     ed::Begin("VhalNodeEditorCanvas");
+
+    // Track active canvas viewport center in canvas coordinates
+    ImVec2 winPos = ImGui::GetWindowPos();
+    ImVec2 winSize = ImGui::GetWindowSize();
+    mCanvasScreenCenter = ImVec2(winPos.x + winSize.x * 0.5f, winPos.y + winSize.y * 0.5f);
+    mCurrentViewCenter = ed::ScreenToCanvas(mCanvasScreenCenter);
+
+    // Track user selection dynamically
+    int selCount = ed::GetSelectedObjectCount();
+    if (selCount > 0) {
+        std::vector<ed::NodeId> selNodes(selCount);
+        int nodeCount = ed::GetSelectedNodes(selNodes.data(), selCount);
+        for (int i = 0; i < nodeCount; ++i) {
+            const CanvasNode* n = findNode(selNodes[i].Get());
+            if (n) {
+                if (n->type == CanvasNodeType::CAN_SIGNAL) {
+                    mLastSelectedCanNodeId = n->id;
+                } else if (n->type == CanvasNodeType::VHAL_PROPERTY) {
+                    mLastSelectedVhalNodeId = n->id;
+                }
+            }
+        }
+    }
 
     // 1. Render all nodes
     for (const auto& node : mNodes) {

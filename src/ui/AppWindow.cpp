@@ -574,74 +574,80 @@ void AppWindow::renderLeftPanel() {
 }
 
 void AppWindow::renderCenterPanel() {
+    auto addToolbarButton = [](const char* label, const char* tooltip, const ImVec4* col = nullptr, const ImVec4* hovCol = nullptr) -> bool {
+        float btnWidth = ImGui::CalcTextSize(label).x + ImGui::GetStyle().FramePadding.x * 2.0f;
+        if (ImGui::GetContentRegionAvail().x >= btnWidth + ImGui::GetStyle().ItemSpacing.x) {
+            ImGui::SameLine();
+        }
+        if (col) {
+            ImGui::PushStyleColor(ImGuiCol_Button, *col);
+            if (hovCol) ImGui::PushStyleColor(ImGuiCol_ButtonHovered, *hovCol);
+        }
+        bool clicked = ImGui::Button(label);
+        if (col) {
+            ImGui::PopStyleColor(hovCol ? 2 : 1);
+        }
+        if (tooltip && ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", tooltip);
+        }
+        return clicked;
+    };
+
     // 1. Prominent Primary Generation Button (Green)
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.16f, 0.58f, 0.32f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.22f, 0.72f, 0.42f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.28f, 0.85f, 0.50f, 1.0f));
-    if (ImGui::Button("⚡ GENERATE C++ CODE", ImVec2(190.0f, 32.0f))) {
+    if (ImGui::Button("⚡ Generate C++")) {
         synthesizeCode();
         mStatusMessage = "Synthesized " + std::to_string(mCanvasView.getLinks().size()) + " mappings into C++ code!";
         mStatusMessageTimer = 4.0f;
     }
     ImGui::PopStyleColor(3);
-
-    ImGui::SameLine();
-    // 2. Open / Load C++ File to Reconstruct Connections (Blue)
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.20f, 0.38f, 0.60f, 1.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.28f, 0.50f, 0.75f, 1.0f));
-    if (ImGui::Button("📁 Load C++ File / Reconstruct", ImVec2(240.0f, 32.0f))) {
-        mDialogMode = FileDialogMode::IMPORT_CPP;
-        std::snprintf(mFilePathBuffer, sizeof(mFilePathBuffer), "%s", resolvePath("sample_data/legacy_vehicle_vhal.cpp").c_str());
-        mShowFileDialog = true;
-    }
-    ImGui::PopStyleColor(2);
     if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("Open any generated or legacy C++ file to reconstruct all visual nodes and connections!");
+        ImGui::SetTooltip("Synthesize AIDL IVehicle C++ code from active canvas links (F5)");
     }
 
-    ImGui::SameLine();
-    // 3. Connect Selected Nodes
-    if (ImGui::Button("🔗 Connect Selected", ImVec2(145.0f, 32.0f))) {
-        if (mCanvasView.connectSelectedNodes()) {
+    // 2. Connect Selected Nodes (Blue)
+    ImVec4 blueCol(0.20f, 0.38f, 0.60f, 1.0f);
+    ImVec4 blueHovCol(0.28f, 0.50f, 0.75f, 1.0f);
+    if (addToolbarButton("🔗 Connect Selected", "Connect the selected CAN signal to the AOSP property node", &blueCol, &blueHovCol)) {
+        std::string connMsg;
+        if (mCanvasView.connectSelectedNodes(&connMsg)) {
             synthesizeCode();
-            mStatusMessage = "Connected selected nodes!";
-            mStatusMessageTimer = 3.0f;
+            mStatusMessage = connMsg;
+            mStatusMessageTimer = 4.0f;
         } else {
-            mStatusMessage = "Tip: Select 1 CAN node and 1 AOSP node to connect";
-            mStatusMessageTimer = 3.0f;
+            mStatusMessage = connMsg;
+            mStatusMessageTimer = 4.0f;
         }
     }
-    if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("Connect the selected CAN signal node to the selected AOSP property node");
-    }
 
-    ImGui::SameLine();
-    // 4. Auto-Connect Matching Names
-    if (ImGui::Button("⚡ Auto-Connect Matching", ImVec2(185.0f, 32.0f))) {
+    // 3. Auto-Connect Matching Names
+    if (addToolbarButton("⚡ Auto-Connect", "Auto-match and connect signals with properties based on matching names and domains")) {
         size_t count = mCanvasView.autoConnectMatchingNames();
         synthesizeCode();
         mStatusMessage = "Auto-connected " + std::to_string(count) + " matching signal/property pairs!";
         mStatusMessageTimer = 3.0f;
     }
-    if (ImGui::IsItemHovered()) {
-        ImGui::SetTooltip("Auto-match and connect signals with properties based on matching names and domains");
-    }
 
-    ImGui::SameLine();
-    // 5. Layout & Navigation buttons
-    if (ImGui::Button("Auto-Layout", ImVec2(100.0f, 32.0f))) {
+    // 4. Auto-Layout
+    if (addToolbarButton("📐 Auto-Layout", "Align CAN source nodes on left and AOSP target nodes on right")) {
         mCanvasView.autoLayoutVertical();
     }
 
-    ImGui::SameLine();
-    if (ImGui::Button("Zoom Fit", ImVec2(80.0f, 32.0f))) {
+    // 5. Zoom Fit
+    if (addToolbarButton("🔍 Zoom Fit", "Zoom and pan canvas to fit all nodes and links in view")) {
         mCanvasView.navigateToContent();
     }
 
-    ImGui::SameLine();
-    if (ImGui::Button("Clear", ImVec2(60.0f, 32.0f))) {
+    // 6. Clear Canvas
+    ImVec4 redCol(0.50f, 0.20f, 0.20f, 0.85f);
+    ImVec4 redHovCol(0.65f, 0.25f, 0.25f, 1.0f);
+    if (addToolbarButton("🗑 Clear Canvas", "Remove all nodes and links from the canvas", &redCol, &redHovCol)) {
         mCanvasView.clearCanvas();
         mGeneratedCode.clear();
+        mStatusMessage = "Canvas cleared.";
+        mStatusMessageTimer = 2.0f;
     }
 
     ImGui::Separator();
@@ -665,16 +671,19 @@ void AppWindow::renderBottomPanel() {
     // Prominent Generate Button
     ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.16f, 0.58f, 0.32f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.22f, 0.72f, 0.42f, 1.0f));
-    if (ImGui::Button("⚡ GENERATE CODE NOW", ImVec2(180.0f, 0.0f))) {
+    if (ImGui::Button("⚡ Generate C++")) {
         synthesizeCode();
     }
     ImGui::PopStyleColor(2);
 
     ImGui::SameLine();
-    if (ImGui::Button("📁 Load C++ File...")) {
+    if (ImGui::Button("📁 Load C++ File / Reconstruct...")) {
         mDialogMode = FileDialogMode::IMPORT_CPP;
         std::snprintf(mFilePathBuffer, sizeof(mFilePathBuffer), "%s", resolvePath("sample_data/legacy_vehicle_vhal.cpp").c_str());
         mShowFileDialog = true;
+    }
+    if (ImGui::IsItemHovered()) {
+        ImGui::SetTooltip("Open any generated or legacy C++ file to reconstruct all visual nodes and connections!");
     }
 
     ImGui::SameLine();
@@ -693,9 +702,17 @@ void AppWindow::renderBottomPanel() {
         }
     }
 
-    // Status indicator
-    ImGui::SameLine(ImGui::GetContentRegionAvail().x - 320.0f);
-    ImGui::TextColored(ImVec4(0.3f, 0.9f, 0.5f, 1.0f), "%s", mStatusMessage.c_str());
+    // Status indicator with nice right alignment
+    if (!mStatusMessage.empty() && mStatusMessageTimer > 0.0f) {
+        float statusWidth = ImGui::CalcTextSize(mStatusMessage.c_str()).x;
+        float avail = ImGui::GetContentRegionAvail().x;
+        if (avail > statusWidth + 20.0f) {
+            ImGui::SameLine(ImGui::GetCursorPosX() + avail - statusWidth - 10.0f);
+        } else {
+            ImGui::SameLine();
+        }
+        ImGui::TextColored(ImVec4(0.3f, 0.9f, 0.5f, 1.0f), "%s", mStatusMessage.c_str());
+    }
 
     ImGui::Separator();
 
