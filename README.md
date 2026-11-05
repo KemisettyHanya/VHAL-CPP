@@ -1,6 +1,50 @@
-# Native C++ CAN-to-AOSP VHAL Visual Mapping Studio (Dear ImGui)
+# CAN-to-AOSP VHAL Visual Mapping Studio
 
-A standalone, hardware-accelerated desktop mapping studio written in modern C++ (C++20). The application has zero external server or browser dependencies and operates directly in-memory using **GLFW3 + OpenGL3**, **Dear ImGui** (docking), and **`imgui-node-editor`** (by thedmd).
+A complete visual automotive development toolchain available both as a **standalone desktop application** (C++20, Dear ImGui, GLFW3 + OpenGL3) and as a **native VS Code Extension** with an embedded Blueprint node editor canvas.
+
+---
+
+## 🚀 VS Code Extension: CAN-to-AOSP VHAL Studio
+
+The visual mapping studio is integrated directly into Visual Studio Code so developers can configure CAN-to-VHAL mappings without leaving their editor.
+
+### Features
+- **Integrated Visual Canvas in VS Code:**
+  - Open with `Ctrl+Alt+V` (or `Cmd+Alt+V` on macOS), from the Command Palette (`CAN-to-VHAL: Open Visual Mapping Studio`), or via the `$(circuit-board) CAN-VHAL Studio` status bar button.
+- **CAN DBC Signal Palette (Left Panel):**
+  - Searchable tree view of all messages and signals in your CAN Database (`.dbc`).
+  - Bit layout display (`b0:16`), Little Endian (Intel) vs Big Endian (Motorola) tags, units (`km/h`, `rpm`, `celsius`), and physical scaling factors.
+  - One-click `+ Add` to canvas or `+ All` for entire messages.
+- **Blueprint Interactive Node Editor (Center Canvas):**
+  - High-performance visual node canvas with dynamic cubic bezier curve connectors.
+  - Interactive pins: drag & drop from CAN signal output sockets to AOSP input sockets.
+  - Transformation Modal: Configure unit conversions (`km/h -> m/s`, `Celsius -> Kelvin`, `RPM -> rad/s`), custom math formulas, clamping, and `areaId`.
+  - One-click `🔗 Connect Selected` and `⚡ Auto-Connect Matching` tools.
+  - `📐 Auto-Layout` and `🔍 Zoom Fit`.
+- **AOSP VehicleProperty Catalog (Right Panel):**
+  - Searchable AIDL vehicle properties (`PERF_VEHICLE_SPEED`, `ENGINE_RPM`, `GEAR_SELECTION`, `FUEL_LEVEL`, etc.).
+  - Categorized into Vehicle Dynamics, Powertrain, HVAC, Body & Cabin, and Lighting & Controls.
+- **Live AIDL C++ Synthesizer (Bottom Panel):**
+  - Live preview of modern, MISRA-compliant `onCanFrameReceived(const struct can_frame& frame)`.
+  - **Insert Directly into Active Editor**: Place generated C++ code directly into your currently open C++ VHAL source file with one click!
+  - **Save to File**: Save synthesized code into your project workspace.
+
+### Installing and Running in VS Code
+The extension is packaged as a `.vsix` in `vscode-extension/can-vhal-studio-1.0.0.vsix`.
+```bash
+# Install the extension into VS Code
+code --install-extension vscode-extension/can-vhal-studio-1.0.0.vsix
+
+# Or build from source
+cd vscode-extension
+npm install
+npm run compile
+npm run package
+```
+
+---
+
+## Native C++ Desktop Application (Dear ImGui)
 
 ---
 

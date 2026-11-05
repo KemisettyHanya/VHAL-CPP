@@ -48,3 +48,7 @@ imgui.ini
 can_vhal_canvas.json
 *.log
 
+# Node & Extension build artifacts
+node_modules/
+package-lock.json
+*.vsix
